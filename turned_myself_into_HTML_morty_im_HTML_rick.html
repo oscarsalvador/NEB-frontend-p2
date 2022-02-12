@@ -1,0 +1,226 @@
+ <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <script type="text/javascript">
+            var container = null;
+            // var searchString = "";
+            // var loadedCharacs;
+
+            //control variables
+            let currentPage = 1;
+            let totalPages = 0;
+            let total = 0;
+            let query = "";
+            
+            function start(){
+                container = document.getElementById("container");
+                
+                search();
+
+                document.addEventListener("scroll", ()=>{
+                    console.log(event.scrollTop)
+                    var {scrollTop, scrollHeight, clientHeight} = document.documentElement;
+                    if (scrollTop + clientHeight >= scrollHeight - 5){
+                        console.log("close to bottom")
+                        getFollowingResults();
+                    }
+                });
+                
+                // getCharacters("rick", 2);
+                // https://rickandmortyapi.com/api/character/?name=rick&page=2
+            }
+        
+            function search(){
+                var searchString = document.getElementById("search-bar").value;
+                // if(searchString.length > 0) {
+                
+                getFirstResult(searchString);
+                
+                // document.getElementById("searchbox").addEventListener("keypress", (event)=>{
+                //     searchString += event.key;
+                // })
+            }
+
+            async function getFollowingResults(){
+                if(++currentPage < totalPages){
+                    query2 = query.length == 0? "?" : query + "&"
+                    var apiUrl = `https://rickandmortyapi.com/api/character/${query2}page=${currentPage}`;
+                    var response = await fetch(apiUrl);
+
+                    if(response.ok){
+                        jason = await response.json();
+                        showCharacs(jason.results);
+                    }else{
+                        console.log("Fetch error, status: " + response.status);
+                    }
+
+                }
+            }
+
+            async function getFirstResult(searchString){
+                query = searchString.length == 0? "": "?name=" + searchString;
+                var apiUrl = `https://rickandmortyapi.com/api/character/` + query;
+                var response = await fetch(apiUrl);
+
+                if(response.ok){
+                    jason = await response.json();
+                    totalPages = jason.info.pages
+                    currentPage = 1;
+                    
+                    while (container.lastChild) {
+                        container.removeChild(container.lastChild);
+                    }
+                    showCharacs(jason.results);
+                }else{
+                    console.log("Fetch error, status: " + response.status);
+                }
+
+                getFollowingResults();
+
+            }
+
+
+            async function getCharacters(name, page){
+                var apiUrl = `https://rickandmortyapi.com/api/character/?name=${name}&page=${page}`;
+                var response = await fetch(apiUrl);
+
+                if(response.ok) return response.json();
+                console.log("Error en el fetch " + response.status);
+            }
+            
+            function showCharacs(newCharacs){
+                console.log(newCharacs)
+                newCharacs.forEach(charac =>{
+                    var newDiv = document.createElement("article");
+                    newDiv.className = "entry";
+
+                    // newDiv.innerHTML = `
+                    //     <img src=${charac.image} style="height: 100%; width: 150px; object-fit: contain"/>
+                    // `;
+
+                    var newDiv2 = document.createElement("div");
+                    newDiv2.className = "image"
+                    var newImg = document.createElement("img");
+                    newImg.className = "image";
+                    newImg.src = charac.image;
+                    newDiv2.appendChild(newImg);
+                    newDiv.appendChild(newDiv2);
+
+                    newDiv2 = document.createElement("div");
+                    newDiv2.className = "charac_card"
+                    var e2 = document.createElement("a");
+                    e2.href = 'https://rickandmortyapi.com/api/character/' + charac.id;
+                    e2.rel = "nofollow noopener noreferrer"
+                    e2.target = "_blank"
+                    var e1 = document.createElement("h4");
+                    e1.innerText = charac.name;
+                    e1.style.display = "inline";
+                    e2.appendChild(e1);
+                    newDiv2.appendChild(e2);
+                    
+                    e1 = document.createElement("center");
+                    e1.className = charac.status;
+                    e1.innerText = "Status: " +  charac.status;
+                    newDiv2.style.display = "inline-block";
+                    newDiv2.style.verticalAlign = "top";
+                    e1.style.margin = "10px"
+                    newDiv2.appendChild(e1);
+
+                    e1 = document.createElement("p");
+                    e1.innerText = `First episode: ${charac.episode[0].split("/").pop()}
+                                    Location: "${charac.location.name}"
+                                    `;
+                    e1.style.display = "inline";
+                    newDiv2.appendChild(e1);
+                    newDiv2.style.verticalAlign = "top";
+                    newDiv2.style.margin = "15px";
+
+                    newDiv.appendChild(newDiv2);
+                    
+                    container.appendChild(newDiv);
+                })
+            }
+
+            function loadCharacs(page){
+                
+            }
+        </script>
+        <style>
+            #top{
+                width: 100%;
+                height: 25%;
+                position: absolute;
+                background: rgb(223, 223, 223);
+            }
+            #search-bar {
+                width: 50%;
+                height: 30%;
+                position: absolute;
+                left: 25%;
+                top: 20%;
+                padding-left: 3%;
+
+            }
+            #container {
+                width: 100%;
+                height: fit-content;
+                position: absolute;
+                top: 25%;
+                background: rgb(223, 223, 223);
+
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-evenly;
+                
+            }
+
+            .entry {
+                width: 500px;
+                height: 150px;
+                margin: 0 0 20px 0;
+                /* position: absolute; MATA FLEX*/
+                background: white;
+            }
+
+            .entry-text {
+                width: 450px;
+                height: 150px;
+                left: 155px;
+                top: 5px;
+            }
+
+            .image{
+                width: 150px; 
+                height: 100%; 
+                object-fit: contain;
+                display: inline-block;
+            }
+
+            .charac_card{
+                width: 300px; 
+                height: 100%; 
+                object-fit: contain;
+            }
+
+
+            .Alive{
+                color: green;
+            }
+            .Dead{
+                color: red;
+            }
+            .unknown{
+                color: rgb(172, 172, 172);
+            }
+
+        </style>
+    </head>
+    <body onload="start()">
+        <div id="top">
+            <input  id="search-bar" oninput="search()" type="text" placeholder="Empieza a escribir para buscar " />
+        </div>
+        <div id="container" onscroll="scroll()">
+        </div>
+    </body>
+<html>
